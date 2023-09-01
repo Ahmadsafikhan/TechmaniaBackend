@@ -6,12 +6,15 @@
   "main": "server.js",
   "scripts": {
     "start": "node Backend/server.js",
-    "server": "nodemon Backend/server.js"
+    "server": "nodemon Backend/server.js",
+    "data:import": "node backend/seeder",
+    "data:destroy": "node backend/seeder -d"
   },
   "author": "safi",
   "license": "ISC",
   "dependencies": {
     "bcryptjs": "^2.4.3",
+    "colors": "^1.4.0",
     "express": "^4.18.2",
     "mongoose": "^7.5.0"
   },
