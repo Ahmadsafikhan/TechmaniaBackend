@@ -14,10 +14,22 @@ const authUser = asyncHandler(async (req, res) => {
     const valid = bcrypt.compareSync(password, user.password);
     if (valid) {
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "2h",
+        expiresIn: "1h",
+      });
+      // set JWT as HTTP-Only cookie
+      res.cookie("jwt", token, {
+        httpOnly: true,
+        secure: process.env.NODE_ENV !== "development",
+        sameSite: "strict",
+        maxAge: 60 * 60 * 1000,
       });
 
-      return res.json({ token });
+      return res.json({
+        _id: user._id,
+        name: user.name,
+        email: user.email,
+        isAdmin: user.isAdmin,
+      });
       // return res.status(200).json({
       //   success: true,
       //   message: "User Login Successfully",
@@ -30,14 +42,65 @@ const authUser = asyncHandler(async (req, res) => {
 // @route   POST/api/users
 // @access Public
 const registerUser = asyncHandler(async (req, res) => {
-  res.send("register user");
+  const { name, email, password } = req.body;
+
+  // Check if the user already exists with the same email
+  const existingUser = await User.findOne({ email });
+
+  if (existingUser) {
+    throw new Error("User with this email already exists");
+  }
+
+  console.log("Password:", password);
+  // Hash the password before saving it to the database
+  const hashedPassword = bcrypt.hashSync(password, 10);
+
+  // Create a new user record in the database
+  const newUser = new User({
+    name,
+    email,
+    password: hashedPassword,
+    // You can add more fields here if needed
+  });
+
+  await newUser.save();
+
+  // Create a JWT token for the new user
+
+  // Return user data in the response
+  if (newUser) {
+    const token = jwt.sign({ userId: newUser._id }, process.env.JWT_SECRET, {
+      expiresIn: "30d",
+    });
+
+    // Set JWT as an HTTP-Only cookie
+    res.cookie("jwt", token, {
+      httpOnly: true,
+      secure: process.env.NODE_ENV !== "development", // Use secure cookies in production
+      sameSite: "strict", // Prevent CSRF attacks
+      maxAge: 30 * 24 * 60 * 60 * 1000, // 30 days
+    });
+    res.status(201).json({
+      _id: newUser._id,
+      name: newUser.name,
+      email: newUser.email,
+      isAdmin: newUser.isAdmin,
+    });
+  } else {
+    res.status(400);
+    throw new Error("invalid user data");
+  }
 });
 
 // @desc  Logout user/ clear cookie
 // @route POST/api/users/logout
 // @access Private
 const logoutUser = asyncHandler(async (req, res) => {
-  res.send("logout user");
+  res.cookie("jwt", "", {
+    httpOnly: true,
+    expires: new Date(0),
+  });
+  res.status(200).json({ message: "logged out successfully" });
 });
 
 // @desc  Get user Profile
