@@ -132,7 +132,7 @@ const updateUserProfile = asyncHandler(async (req, res) => {
     user.email = req.body.email || user.email;
 
     if (req.body.password) {
-      user.password = req.body.password;
+      user.password = bcrypt.hashSync(req.body.password, 10);
     }
 
     const updatedUser = await user.save();
