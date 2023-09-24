@@ -14,14 +14,14 @@ const authUser = asyncHandler(async (req, res) => {
     const valid = bcrypt.compareSync(password, user.password);
     if (valid) {
       const token = jwt.sign({ userId: user._id }, process.env.JWT_SECRET, {
-        expiresIn: "1h",
+        expiresIn: "30d",
       });
       // set JWT as HTTP-Only cookie
       res.cookie("jwt", token, {
         httpOnly: true,
         secure: process.env.NODE_ENV !== "development",
-        // sameSite: "strict",
-        maxAge: 60 * 60 * 1000,
+        sameSite: "strict",
+        maxAge: 30 * 24 * 60 * 60 * 1000,
       });
 
       return res.status(200).json({

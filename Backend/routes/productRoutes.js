@@ -7,18 +7,13 @@ import {
   updateProduct,
   deleteProduct,
   createProductReview,
+  getTopProducts,
 } from "../controllers/productController.js";
 import { protect, admin } from "../middleware/authMiddleware.js";
 
-// get all the product data in json format
-// router.get("/", asyncHandler(async(req, res) => {
-//   res.json(products);
-// }));
 
-router
-  .route("/")
-  .get(getProducts)
-  .post(protect, admin, createProduct);
+router.route("/").get(getProducts).post(protect, admin, createProduct);
+router.get("/top", getTopProducts);
 
 // get specific product
 router
@@ -26,6 +21,6 @@ router
   .get(getProductById)
   .put(protect, admin, updateProduct)
   .delete(protect, admin, deleteProduct);
-  router.route('/:id/reviews').post(protect, createProductReview)
+router.route("/:id/reviews").post(protect, createProductReview);
 
 export default router;

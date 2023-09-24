@@ -57,9 +57,7 @@ const getProducts = asyncHandler(async (req, res) => {
   const totalProducts = await Product.countDocuments();
   const totalPages = Math.ceil(totalProducts / limit);
 
-  const products = await Product.find({})
-    .skip(skip)
-    .limit(limit);
+  const products = await Product.find({}).skip(skip).limit(limit);
 
   res.status(200).json({
     products,
@@ -68,8 +66,6 @@ const getProducts = asyncHandler(async (req, res) => {
     currentPage: page,
   });
 });
-
-
 
 // @desc Fetch Product by id
 const getProductById = asyncHandler(async (req, res) => {
@@ -143,7 +139,6 @@ const deleteProduct = asyncHandler(async (req, res) => {
   }
 });
 
-
 // @desc    Create a new review
 // @route   POST /api/products/:id/reviews
 // @access  Private
@@ -159,7 +154,7 @@ const createProductReview = asyncHandler(async (req, res) => {
 
     if (alreadyReviewed) {
       res.status(400);
-      throw new Error('Product already reviewed');
+      throw new Error("Product already reviewed");
     }
 
     const review = {
@@ -178,11 +173,20 @@ const createProductReview = asyncHandler(async (req, res) => {
       product.reviews.length;
 
     await product.save();
-    res.status(201).json({ message: 'Review added' });
+    res.status(201).json({ message: "Review added" });
   } else {
     res.status(404);
-    throw new Error('Product not found');
+    throw new Error("Product not found");
   }
+});
+
+// @desc    Get top rated products
+// @route   GET /api/products/top
+// @access  Public
+const getTopProducts = asyncHandler(async (req, res) => {
+  const products = await Product.find({}).sort({ rating: -1 }).limit(5);
+
+  res.json(products);
 });
 
 export {
@@ -192,4 +196,5 @@ export {
   updateProduct,
   deleteProduct,
   createProductReview,
+  getTopProducts,
 };
