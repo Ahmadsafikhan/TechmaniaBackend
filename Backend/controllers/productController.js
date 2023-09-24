@@ -189,6 +189,28 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
+
+// @desc Search for products
+// @route GET /api/products/search?keyword=
+// @access Public
+const searchProducts = asyncHandler(async (req, res) => {
+  const keyword = req.query.keyword;
+
+  if (keyword) {
+    const products = await Product.find({
+      $or: [
+        { name: { $regex: keyword, $options: 'i' } }, // Case-insensitive search in product name
+        { description: { $regex: keyword, $options: 'i' } }, // Case-insensitive search in product description
+      ],
+    });
+
+    res.json(products);
+  } else {
+    res.status(400);
+    throw new Error('Invalid search keyword');
+  }
+});
+
 export {
   getProducts,
   getProductById,
@@ -197,4 +219,5 @@ export {
   deleteProduct,
   createProductReview,
   getTopProducts,
+  searchProducts
 };
