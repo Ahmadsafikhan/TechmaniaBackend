@@ -1,5 +1,11 @@
 import asyncHandler from "../middleware/asyncHandler.js";
 import Order from "../models/orderModel.js";
+import stripe from "stripe";
+
+// const stripeSecretKey = process.env.STRIPE_SECRET;
+const stripeInstance = stripe(
+  "sk_test_51NpSHnA4QkeJV4C96TD807qiKiJyViAwwJLTuHZq7Y7Kb8jzQFJu4t0fyNac6STKKt7d9LjBQ0wmet7LcF1Mz3bo00z52w5XXU"
+);
 
 // @desc Create new order
 // @route POST /api/orders
@@ -79,13 +85,44 @@ const updateOrderToPaid = asyncHandler(async (req, res) => {
     const updatedOrder = await order.save();
 
     res.json(updatedOrder);
-  }else{
+  } else {
     res.status(404);
-    throw new Error('Order not found');
+    throw new Error("Order not found");
   }
 });
 
+const checkoutSession = asyncHandler(async (req, res) => {
+  console.log(req.body, "stripe");
 
+  const { cart } = req.body;
+
+  console.log(cart.totalPrice);
+  try {
+    const session = await stripeInstance.checkout.sessions.create({
+      payment_method_types: ["card"],
+      line_items: [
+        {
+          price_data: {
+            currency: "usd",
+            product_data: {
+              name: "Your Product Name",
+            },
+            unit_amount: Math.round(cart.totalPrice * 100), // The amount in cents
+          },
+          quantity: 1,
+        },
+      ],
+      mode: "payment",
+      success_url: "http://localhost:3000/checkout-success", // Redirect URL after successful payment
+      cancel_url: "http://localhost:3000/cart", // Redirect URL if payment is canceled
+    });
+
+    res.json({ sessionId: session.id });
+  } catch (error) {
+    console.log("stripebackend", error);
+    res.status(500).json({ error: "Failed to create checkout session" });
+  }
+});
 // @desc Update order to delivered
 // @route PUT /api/orders/:id/deliver
 // @access Private/Admin
@@ -107,4 +144,5 @@ export {
   updateOrderToPaid,
   updateOrderToDelivered,
   getOrders,
+  checkoutSession,
 };
