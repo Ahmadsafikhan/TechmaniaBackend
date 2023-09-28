@@ -14,16 +14,45 @@ const addOrderItems = asyncHandler(async (req, res) => {
   const {
     orderItems,
     shippingAddress,
-    paymentMethod,
+    // paymentMethod,
     itemsPrice,
     taxPrice,
     totalPrice,
     shippingPrice,
   } = req.body;
+
   if (orderItems && orderItems.length === 0) {
     res.status(400);
     throw new Error("No order item");
   } else {
+    // console.log(cart.totalPrice);
+    let sessionId;
+    try {
+      const session = await stripeInstance.checkout.sessions.create({
+        payment_method_types: ["card"],
+        line_items: [
+          {
+            price_data: {
+              currency: "usd",
+              product_data: {
+                name: "Your Product Name",
+              },
+              unit_amount: Math.round(totalPrice * 100), // The amount in cents
+            },
+            quantity: 1,
+          },
+        ],
+        mode: "payment",
+        success_url: "http://localhost:3000/checkout-success", // Redirect URL after successful payment
+        cancel_url: "http://localhost:3000/cart", // Redirect URL if payment is canceled
+      });
+
+      sessionId = session.id;
+    } catch (error) {
+      console.log("stripebackend", error);
+      res.status(500).json({ error: "Failed to create checkout session" });
+    }
+
     const order = new Order({
       orderItems: orderItems.map((x) => ({
         ...x,
@@ -32,11 +61,12 @@ const addOrderItems = asyncHandler(async (req, res) => {
       })),
       user: req.user._id,
       shippingAddress,
-      paymentMethod,
+      // paymentMethod,
       itemsPrice,
       taxPrice,
       totalPrice,
       shippingPrice,
+      sessionId,
     });
     const createdOrder = await order.save();
     res.status(201).json(createdOrder);
@@ -107,7 +137,7 @@ const checkoutSession = asyncHandler(async (req, res) => {
             product_data: {
               name: "Your Product Name",
             },
-            unit_amount: Math.round(cart.totalPrice * 100), // The amount in cents
+            unit_amount: Math.round(totalPrice * 100), // The amount in cents
           },
           quantity: 1,
         },
@@ -134,7 +164,8 @@ const updateOrderToDelivered = asyncHandler(async (req, res) => {
 // @route GET /api/orders
 // @access Private/Admin
 const getOrders = asyncHandler(async (req, res) => {
-  res.send("get all orders");
+  const orders = await Order.find({}).populate('user', 'id name');
+  res.json(orders);
 });
 
 export {
