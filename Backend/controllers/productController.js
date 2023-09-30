@@ -2,34 +2,28 @@ import asyncHandler from "../middleware/asyncHandler.js";
 import Product from "../models/productModel.js";
 
 // @desc Fetch all Products
-// const getProducts = asyncHandler(async (req, res) => {
-//   const page = parseInt(req.query.page) || 1; // Get the page number from query parameters, default to 1
-//   const limit = parseInt(req.query.limit) || 3; // Get the number of items per page, default to 10
+const getProducts = asyncHandler(async (req, res) => {
+  const page = parseInt(req.query.page) || 1;
+  const limit = parseInt(req.query.limit) || 10;
 
-//   const skip = (page - 1) * 4;
+  const skip = (page - 1) * limit;
 
-//   const totalProducts = await Product.countDocuments({}).exec();
-//   const totalPages = Math.ceil(totalProducts / 4);
-//   console.log("Total Pages: ", totalPages);
-//   console.log("Value:", totalProducts / 4);
+  const totalProducts = await Product.countDocuments({});
+  const totalPages = Math.ceil(totalProducts / limit);
+  // console.log("Total Pages: ", totalPages);
+  // console.log("Value:", totalProducts / limit);
 
-//   const products = await Product.find({}).limit(4).skip(skip).exec();
+  const products = await Product.find({}).skip(skip).limit(limit);
 
-//   // totalDocuments = await Book.countDocuments(filters).exec();
-//   // documents = await Book.find(filters)
-//   //     .limit(Number(limit))
-//   //     .skip((page - 1) * limit)
-//   //     .exec();
-
-//   res.status(200).json({
-//     products,
-//     page,
-//     currentItems: products.length,
-//     totalProducts,
-//     totalPages,
-//     limit: 4,
-//   });
-// });
+  res.status(200).json({
+    products,
+    page,
+    currentItems: products.length,
+    totalProducts,
+    totalPages,
+    limit,
+  });
+});
 
 // const getProducts = asyncHandler(async (req, res) => {
 //   const page = parseInt(req.query.page) || 1; // Get the page number from the request query
@@ -48,24 +42,24 @@ import Product from "../models/productModel.js";
 //   res.status(200).json({ products, pageCount });
 // });
 
-const getProducts = asyncHandler(async (req, res) => {
-  const page = parseInt(req.query.page) || 1;
-  const limit = parseInt(req.query.limit) || 30;
+// const getProducts = asyncHandler(async (req, res) => {
+//   const page = parseInt(req.query.page) || 1;
+//   const limit = parseInt(req.query.limit) || 10;
 
-  const skip = (page - 1) * limit;
+//   const skip = (page - 1) * limit;
 
-  const totalProducts = await Product.countDocuments();
-  const totalPages = Math.ceil(totalProducts / limit);
+//   const totalProducts = await Product.countDocuments();
+//   const totalPages = Math.ceil(totalProducts / limit);
 
-  const products = await Product.find({}).skip(skip).limit(limit);
+//   const products = await Product.find({}).skip(skip).limit(limit);
 
-  res.status(200).json({
-    products,
-    totalProducts,
-    totalPages,
-    currentPage: page,
-  });
-});
+//   res.status(200).json({
+//     products,
+//     totalProducts,
+//     totalPages,
+//     currentPage: page,
+//   });
+// });
 
 // @desc Fetch Product by id
 const getProductById = asyncHandler(async (req, res) => {
@@ -93,7 +87,7 @@ const createProduct = asyncHandler(async (req, res) => {
     numReviews: 0,
     description: "Sample description",
   });
-  
+
   const createdProduct = await product.save();
   res.status(201).json(createdProduct);
 });
@@ -189,7 +183,6 @@ const getTopProducts = asyncHandler(async (req, res) => {
   res.json(products);
 });
 
-
 // @desc Search for products
 // @route GET /api/products/search?keyword=
 // @access Public
@@ -199,15 +192,15 @@ const searchProducts = asyncHandler(async (req, res) => {
   if (keyword) {
     const products = await Product.find({
       $or: [
-        { name: { $regex: keyword, $options: 'i' } }, // Case-insensitive search in product name
-        { description: { $regex: keyword, $options: 'i' } }, // Case-insensitive search in product description
+        { name: { $regex: keyword, $options: "i" } }, // Case-insensitive search in product name
+        { description: { $regex: keyword, $options: "i" } }, // Case-insensitive search in product description
       ],
     });
 
     res.json(products);
   } else {
     res.status(400);
-    throw new Error('Invalid search keyword');
+    throw new Error("Invalid search keyword");
   }
 });
 
@@ -219,5 +212,5 @@ export {
   deleteProduct,
   createProductReview,
   getTopProducts,
-  searchProducts
+  searchProducts,
 };
